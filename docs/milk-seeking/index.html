@@ -1,0 +1,518 @@
+<!doctype html>
+<html>
+<head>
+	<title>Milkless Milk Truck Detection</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+<div class="max-w-3xl mx-auto p-6 text-gray-600 leading-relaxed font-serif">
+<h1 class="text-4xl md:text-6xl font-bold mb-4">
+	Milkless Milk Truck Detection
+</h1>
+
+<h2 class="text-3xl font-bold mb-4">
+	Most Terrible Problem
+</h2>
+
+<p>
+	Over 7 years ago I took a picture of a milk truck. It brought me great joy
+	and I would frequently look back at it in wonder. Then I misplaced it.
+</p>
+
+<p>
+	The most obvious solution to this problem is, of course, not to search my
+	whole hard drive to find my most treasured picture, but rather build an
+	object detector model which will then be able to detect a milk truck in a
+	picture, after which I can let an automated script search my whole hard
+	drive while I watch anime.
+</p>
+
+<p>
+	There is a slight problem, though -- I don't exactly have any images of a
+	milk truck such as that one to train it on.
+</p>
+
+<h2 class="text-3xl font-bold mb-4 mt-4">
+	Synthetic Milk
+</h2>
+
+<p>
+	As I do have the most excellent Blender skills in my possesion, I created a
+	simple replica to the best of my ability -- it was very hard to remember
+	how the truck looked like, exactly.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse">
+	<tr>
+		<th colspan="2" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 1. Milk Trucks
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img width="320" src="truck1.png" alt="untextured milk"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img width="320" src="truck2.png" alt="textured milk"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			This took about 30 minutes to create, the model has a very low
+			polygon count as is very rough, but it does get the basic shape
+			across.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			All in all this is not the most realistic 3D model, but maybe it
+			will be enough to find what we're looking for.
+		</td>
+	</tr>
+</table>
+
+<p>
+	I plopped these trucks in a simple countryside scene. Ideally we would use a
+	multitude of different backgrounds, but alas, a tremendous feeling of
+	slothfulness overcame me and I couldn't be bothered to complete a most 
+	arduous task such as the creation of more backgrounds.
+</p>
+
+<h2 class="text-3xl font-bold mb-4 mt-4">
+	Actually Synthesizing The Milk 
+</h2>
+
+<p>
+	To train an object detection model, we'll need a lot of images themselves,
+	as well as the tricky bits -- labels, which are the definitions of bounding
+	boxes of objects in the image.
+</p>
+
+<p>
+	I found the easiest way to create these labels is to render a normal color
+	image and then tweak the 3D model's rendering settings to render the whole
+	model in a magenta sentinel color, thereby creating a segmentation map,
+	after which this image could be processed so as to find the highest/lowest
+	and leftest/rightest magent pixels to use those values for the bounding box.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse">
+	<tr>
+		<th colspan="3" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 2. Milk Truck Segmentation
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-48" src="segcolor.png" alt="color image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-48" src="segsegment.png" alt="segment image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-48" src="segbound.png" alt="bounding box"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			Color image.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Segment image.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Bounding box derived from a segment image. This one is for a
+			different angle, as I misplaced the bounding box image for the
+			other images.
+		</td>
+	</tr>
+</table>
+
+<p>
+	The Milk Trucks were placed in the scene by hand, as there were not that
+	many, but other parameters of the renderings were randomly chosen:
+</p>
+
+<ol class="list-decimal list-outside pl-6 space-y-1 mt-2 mb-2">
+	<li>
+		<b>Lighting.</b>
+		<p>
+			I chose 3 vaguely realistic looking combinations of ambient color,
+			direct color and their brightnesses, representing dusk, overcast day and
+			a sunny day. The color values get randomly blended together from the 3
+			presets and get a random color offset added on top.
+		</p>
+	</li>
+	<li>
+		<b>View position.</b>
+		<p>
+			The view position was determined by generating a random normal vector, 
+			multiplying its magnitude by a random number and then adding it to a
+			position of a milk truck.
+		</p>
+		<p>
+			Additionally a ray-cast is performed from the new view position, to the
+			model of the milk truck, so as to ensure that there will be no scenery
+			blocking the view.
+		</p>
+		<p>
+			This also effectively solves the problem of the completely random view
+			offset from being inadvertently placed inside the ground.
+		</p>
+	</li>
+	<li>
+		<b>View rotation.</b>
+		<p>
+			We simply rotate the view so that it points directly at the milk
+			truck, after which we add a random rotation to it, so that the milk
+			truck doesn't end up in the center of all images.
+		</p>
+	</li>
+</ol>
+
+<p>
+	Writing the C++ for this was pretty easy and truly joyous, as I used my most
+	wonderful creation, the <a href="https://racenis.github.io/tram-sdk/index.html">
+	Tramway SDK</a> for all of the synthesis tasks.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse mx-auto">
+	<tr>
+		<th colspan="3" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 3. Randomly Pictured Milk Trucks
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="19-orig.png" alt="randomly pictured truck 1"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="85-orig.png" alt="randomly pictured truck 2"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="86-orig.png" alt="randomly pictured truck 3"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="96-orig.png" alt="randomly pictured truck 4"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="137-orig.png" alt="randomly pictured truck 5"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="144-orig.png" alt="randomly pictured truck 6"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="152-orig.png" alt="randomly pictured truck 7"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="165-orig.png" alt="randomly pictured truck 8"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="194-orig.png" alt="randomly pictured truck 9"/>
+		</td>
+	</tr>
+
+</table>
+
+<p>
+	To further augment the dataset, I decided to take the 256x256 synthesized
+	images, crop them to 224x224 images with a random offset, as well as apply
+	various filters:
+</p>
+
+<ol class="list-decimal list-outside pl-6 space-y-1 mt-2 mb-2">
+	<li>
+		<b>No filter.</b> The image is cropped and then output as-is.
+	</i>
+	<li>
+		<b>Horizontal Flip.</b> The image is flipped horizontally.
+	</i>
+	
+	<li>
+		<b>HSV Shift.</b> The colors of the image are shifted randomly.
+	</i>
+	
+	<li>
+		<b>Warp.</b> The image is distorted with a sine function.
+	</i>
+	
+	<li>
+		<b>Skew.</b> The image is randomly sheared.
+	</i>
+</ol>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse">
+	<tr>
+		<th colspan="5" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 4. Randomly Processed Milk Trucks
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="aspect-square object-cover" src="16-orig.png" alt="original image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="aspect-square object-cover" src="16-flip.png" alt="flipped image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="aspect-square object-cover" src="16-hsv.png" alt="hsv image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="aspect-square object-cover" src="16-warp.png" alt="warped image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="aspect-square object-cover" src="16-skew.png" alt="skewed image"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			Original.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Flipped.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			HSV shifted.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Warped.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Skewed.
+		</td>
+	</tr>
+</table>
+
+<p>
+	I then tasked my <s>cyberslave</s> thankless servant Claude with the
+	creation Python scripts to do all of the data processing outside of the
+	graphics engine (it's too easy for me to be any fun).
+</p>
+
+<h2 class="text-3xl font-bold mb-4 mt-4">
+	Training The Model
+</h2>
+
+<p>
+	Usually to get good results for a proper object detection model, you need a
+	ton of data. I only have a couple of kilograms, so instead I decided to use
+	a pre-trained model and then only fine-tune it.
+</p>
+
+<p>
+	I grabbed a relatively small YOLO object detection model and after 2 hours
+	of training (it was done on a 15 year old laptop; don't ask) I finally had a
+	model capable of recognizing a milk truck... or so I thought.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse mx-auto">
+	<tr>
+		<th colspan="5" id="fig5" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 5. Flying Over Milk Trucks
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<video class="mx-auto" controls width="480">
+				<source src="resize109.mp4" type="video/mp4"/>
+				<a href="resize109.mp4">Download video (17,1 MB)</a>
+			</video>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			Notice how we sometimes get detections when there are no milk trucks
+			on the screen.
+		</td>
+	</tr>
+</table>
+
+<p>
+	The dataset that I used to fine-tune the model had two notable flaws -- the
+	first being the fact that we did not use any non milk-truck examples and the
+	second being the fact that we had no pure background images.
+</p>
+
+<p>
+	The latter flaw manifested itself most clearly when I ran the model over
+	images being captured live and I noticed that we sometimes get detections
+	when there are no milk trucks on the screen (see
+	<a class="text-blue-600 underline underline-offset-2 hover:text-blue-800 hover:underline-offset-4 transition" href="#fig5">Fig. 5.</a>), altough everything works really well when there at least a single
+	milk truck visible, similar to the training data.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse mx-auto">
+	<tr>
+		<th colspan="5" id="fig6" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 6. Milk-Fuel Truck Confusion
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="object-cover" src="lorry.png" alt="original image"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="object-cover" src="lorry2.png" alt="original image"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			Fuel truck.
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			Milk truck.
+		</td>
+	</tr>
+</table>
+
+<p>
+	The former flaw was most noticeable when comparing a real image of a fuel
+	truck to an image of an actual milk truck (see
+	<a class="text-blue-600 underline underline-offset-2 hover:text-blue-800 hover:underline-offset-4 transition" href="#fig6">Fig. 6.</a>). The YOLO model that I am fine-tuning was
+	trained on the COCO dataset, which contains a lot of examples of trucks, so
+	it seems like we might have taught the model to identify all trucks as milk
+	trucks, which was to be expected.
+</p>
+
+<p>
+	At least we are making some progress. Had I not known what a truck is and I
+	couldn't appropriately use the pre-trained category, the images of the
+	objects I synthesized were enough to train the model to be capable of
+	filtering out the vast majority of images on my disk drive.
+</p>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse mx-auto">
+	<tr>
+		<th colspan="3" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 7. Additional Negative Examples
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-00ce5aaad5-orig.png" alt="randomly negative truck 1"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-1cc714b63c-warp.png" alt="randomly negative truck 2"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-2ef863a536-skew.png" alt="randomly negative truck 3"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-9b31296944-hsv.png" alt="randomly negative truck 4"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-4ef6d4b572-flip.png" alt="randomly negative truck 5"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-5e1991e1f8-flip.png" alt="randomly negative truck 6"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-6e73d12b9e-warp.png" alt="randomly negative truck 7"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-3ca2876ec8-flip.png" alt="randomly negative truck 8"/>
+		</td>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="w-32" src="neg-57e01add12-skew.png" alt="randomly negative truck 9"/>
+		</td>
+	</tr>
+</table>
+
+<p>
+	To get the model to classify milk trucks specifically with a higher 
+	confidence score than other types of trucks, as well as to rectify the
+	issue of detections in images with no trucks whatsoever, I supplemented the
+	dataset with random non-milk truck images procured from Google Images and
+	various non-truck images from my meme and Hatsune Miku fanart folders.
+</p>
+
+<h2 class="text-3xl font-bold mb-4 mt-4">
+	Results and Conclusions
+</h2>
+
+<table class="mt-4 mb-4 border border-gray-300 border-collapse">
+	<tr>
+		<th colspan="3" class="border border-gray-300 px-4 py-2 bg-gray-100">
+			Fig. 8. We Found It!
+		</th>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			<img class="mx-auto" src="piiiiieeens.png" alt="color image"/>
+		</td>
+	</tr>
+	<tr>
+		<td class="border border-gray-300 px-4 py-2">
+			It turns out that it was not a milk truck at all, but rather a milk
+			trailer... I guess I need to eat more curd so that I have better
+			memory.
+		</td>
+	</tr>
+</table>
+
+<p>
+	At first I didn't even think that this would work at all -- I totally knew
+	that I could get the bounding boxes all generated, maybe even get the model
+	to unreliably work on synthetic data.
+</p>
+
+<p>
+	I basically created the worst case synthetic data scenario -- very
+	unrealistic, low-poly graphics that look like they belong in a 20 year old
+	video game, augmented with very little real data, all used to fine-tune a
+	relatively tiny model.
+</p>
+
+<p>
+	But in the end we did manage to locate my most beloved picture.
+</p>
+
+<h2 class="text-2xl font-bold mb-4 mt-4">
+	What's Next?
+</h2>
+
+<p>
+	Hardware upgrade, then I'll start working on algorithms for processing
+	gaussian splats. The idea is to create something that can break apart a
+	scanned 3D scene, then rearrange the parts to create new scenes. Then we use
+	the new scenes for training models.
+</p>
+
+<p>
+	This should allow us to bridge the gap from synthetic to real data way more
+	easily -- the results we got in this experiment were surprisingly not
+	totally terrible, but there is plenty of room for improvement.
+</p>
+
+<h3 class="text-2xl font-bold mb-4 mt-4">
+	Links
+</h3>
+
+<ul class="list-disc list-outside pl-6 space-y-1 mt-2 mb-2">
+	<li>
+		<a class="text-blue-600 underline underline-offset-2 hover:text-blue-800 hover:underline-offset-4 transition" href="https://github.com/racenis/synthetic-data">Github Repo</a>
+	</i>
+</ul>
+
+<div class="mt-16 mb-8 text-center">
+	<a href="../"
+	 class="inline-block bg-gray-800 text-white font-semibold px-6 py-3 rounded-lg shadow
+			hover:bg-gray-700 hover:shadow-md
+			active:scale-95
+			focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2
+			transition duration-150">
+	← Return
+	</a>
+	</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,151 @@
+#include <framework/core.h>
+#include <framework/logging.h>
+#include <framework/ui.h>
+#include <framework/gui.h>
+#include <framework/async.h>
+#include <framework/event.h>
+#include <framework/message.h>
+#include <framework/system.h>
+#include <framework/worldcell.h>
+#include <framework/language.h>
+#include <framework/file.h>
+#include <framework/path.h>
+#include <framework/stats.h>
+#include <framework/script.h>
+#include <framework/loader.h>
+#include <framework/settings.h>
+#include <framework/serialization.h>
+#include <components/trigger.h>
+#include <audio/audio.h>
+#include <audio/sound.h>
+#include <render/render.h>
+#include <render/material.h>
+#include <render/api.h>
+#include <render/scene.h>
+#include <physics/physics.h>
+#include <physics/api.h>
+#include <entities/player.h>
+#include <entities/staticworldobject.h>
+#include <entities/light.h>
+#include <entities/crate.h>
+#include <entities/marker.h>
+#include <entities/trigger.h>
+#include <entities/sound.h>
+#include <entities/decoration.h>
+#include <components/player.h>
+#include <components/animation.h>
+#include <components/controller.h>
+#include <components/render.h>
+#include <extensions/camera/camera.h>
+#include <extensions/menu/menu.h>
+#include <extensions/scripting/lua.h>
+#include <extensions/kitchensink/kitchensink.h>
+#include <extensions/kitchensink/entities.h>
+#include <extensions/kitchensink/soundtable.h>
+
+#include "segmentable.h"
+#include "synth.h"
+#include "drone.h"
+
+using namespace tram;
+using namespace tram::UI;
+using namespace tram::Render;
+using namespace tram::Physics;
+using namespace tram::Ext::Kitchensink;
+
+void main_loop();
+
+static Scenario* scenario = nullptr;
+
+int main(int argc, const char** argv) {
+	Settings::Load("settings.cfg");
+	Settings::Parse(argv, argc);
+	
+	Light::Register();
+    Crate::Register();
+    Sound::Register();
+    Decoration::Register();
+    Trigger::Register();
+    StaticWorldObject::Register();
+    Ext::Kitchensink::Button::Register();
+	
+	Segmentable::Register();
+	
+	Core::Init();
+	UI::Init();
+	Render::Init();
+	Physics::Init();
+#ifdef __EMSCRIPTEN__
+	Async::Init(0);
+#else
+	Async::Init();
+#endif
+	Audio::Init();
+	GUI::Init();
+
+	Ext::Menu::Init();
+	Ext::Camera::Init();
+	Ext::Kitchensink::Init();
+
+	Ext::Scripting::Lua::Init();
+	Script::Init();
+	
+	Serialization::LoadPluginManifest();
+	Serialization::LoadDataManifest();
+	
+	Serialization::LoadInitial();
+	Serialization::LoadDelayed();
+	
+	//scenario = new SynthScenario("garden", false);
+	scenario = new DroneScenario("garden", false);
+	scenario->Setup();
+	
+	#ifdef __EMSCRIPTEN__
+		UI::SetWebMainLoop(main_loop);
+	#else
+		while (!UI::ShouldExit()) {
+			main_loop();
+		}
+
+		Ext::Scripting::Lua::Uninit();
+		
+		Async::Yeet();
+		Audio::Uninit();
+		UI::Uninit();
+		
+		Settings::Save("settings.cfg");
+	#endif
+}
+
+void main_loop() {
+	Core::Update();
+	UI::Update();
+	Physics::Update();	
+
+	GUI::Begin();
+	Ext::Menu::Update();
+
+	Event::Dispatch();
+	Message::Dispatch();
+	
+	GUI::End();
+	GUI::Update();
+	
+	if (scenario) scenario->Update();
+	
+	Async::LoadResourcesFromDisk();
+	Async::LoadResourcesFromMemory();
+	Async::FinishResources();
+	
+	Loader::Update();
+	
+	AnimationComponent::Update();
+	ControllerComponent::Update();
+	
+	Ext::Camera::Update();
+	
+	Render::Render();
+	UI::EndFrame();
+	
+	Stats::Collate();
+}

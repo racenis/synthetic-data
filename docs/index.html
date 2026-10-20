@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synthetic Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+	tailwind.config = {
+	  theme: { extend: { fontFamily: { serif: ['Merriweather', 'Georgia', 'serif'] } } }
+	}
+  </script>
+</head>
+<body class="font-serif bg-gray-50 text-gray-800 min-h-screen px-6 py-16">
+
+  <main class="max-w-xl mx-auto">
+
+	<!-- Title -->
+	<header class="mb-10">
+	  <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+		Synthetic Data
+	  </h1>
+	  <p class="mt-3 text-gray-500 leading-relaxed">
+		A collection of projects that I'm doing as a part of my PhD studies.
+	  </p>
+	</header>
+
+	<!-- Vertical link list -->
+	<nav>
+	  <ul class="space-y-3 list-none p-0 m-0">
+
+		<li>
+		  <a href="milk-seeking/"
+			 class="group flex items-center justify-between gap-4
+					bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-sm
+					hover:border-indigo-400 hover:shadow-md hover:-translate-y-0.5
+					focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2
+					transition duration-150">
+			<span class="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">
+			  Milkless Milk Truck Detection 
+			</span>
+			<span class="text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition"
+				  aria-hidden="true">→</span>
+		  </a>
+		</li>
+
+		<!-- Add more entries by copying the <li> block above -->
+
+	  </ul>
+	</nav>
+
+  </main>
+
+</body>
+</html>
