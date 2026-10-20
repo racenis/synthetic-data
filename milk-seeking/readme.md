@@ -1,19 +1,6 @@
-# Tramway SDK Template Project
+# Milk Truck Dataset Generator, Training Scripts
 
-The Tramway SDK framework is constructed as a C++ library, so in order to use it
-you need an application to embed it in. This is such an application and a very
-minimalistic application at that.
-
-After downloading the repository you can either use it as a base for your C++
-project, or you can use it for doing Lua scripting.
-
-![Template screenshot](template.png)
-
-# Downloading
-
-Compiled binaries for Windows 64-bit are available for this template in the 
-latest [Tramway SDK](https://github.com/racenis/tram-sdk/releases/tag/v0.1.1)
-release.
+Here's more info: https://racenis.github.io/synthetic-data/milk-seeking/
 
 # Building
 
