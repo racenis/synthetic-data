@@ -23,10 +23,6 @@
 
 # Plan for the Library
 
-1. implement basic image manipulation
-- create blank image && write it out
-- create image from pixels, copy and write out
-
 2. implement basic quilt
 - write a single patch
 - write all the patches

@@ -1,2 +1,2 @@
-#include "quilt.c"
+#include "quilt.h"
 

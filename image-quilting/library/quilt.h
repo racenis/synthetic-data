@@ -1,7 +1,6 @@
 #ifndef QUILT_H
 #define QUILT_H
 
-// copy patch in as-is 
-// quilt patch in
+void quilt_quilt(quilt_image_t* source, quilt_image_t* image);
 
 #endif // QUILT_H
