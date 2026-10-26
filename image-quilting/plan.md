@@ -23,12 +23,5 @@
 
 # Plan for the Library
 
-2. implement basic quilt
-- write a single patch
-- write all the patches
-
-3. implement slightly better quilt
-- match patches based on score
-
 4. implement cutting
 - cut patches when writing them in

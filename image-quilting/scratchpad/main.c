@@ -7,6 +7,7 @@
 #include "stb_image_write.h"
 
 #include "../library/image.h"
+#include "../library/quilt.h"
 
 int main(int argc, const char** argv) {
 	(void)argc;
@@ -26,14 +27,17 @@ int main(int argc, const char** argv) {
 	
 	quilt_image_from_pixels(&input, pixels, width, height);
 	
-	quilt_image_init(&quilt, width, height, 255, 255, 0);
+	//quilt_image_init(&quilt, width, height, 255, 255, 0);
+	quilt_image_init(&quilt, width, height, 0, 0, 0);
+	//quilt_image_copy(&input, &quilt);
+	quilt_quilt(&input, &quilt);
 	
 	stbi_image_free(pixels);
 	
 	width = width + width;
 	height = height + height;
 	pixels = malloc(width * height * 3);
-	quilt_image_to_pixels_border(&input, pixels);
+	quilt_image_to_pixels_border(&quilt, pixels);
 	
 	int success = stbi_write_png("output.png", width, height, 3, pixels, width * 3);
 

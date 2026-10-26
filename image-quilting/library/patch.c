@@ -1,5 +1,10 @@
 #include "patch.h"
 
+#include <string.h>
+#include <stdlib.h>
+
+#define CANDIDATE_COUNT 8
+
 void quilt_patch_from_coords(quilt_image_t* source, quilt_patch_t* patch, int w, int h, int x, int y) {
 	memset(patch, 0, sizeof(quilt_patch_t));
 	
@@ -53,10 +58,10 @@ void quilt_patch_pick(quilt_image_t* source, quilt_image_t* image, quilt_patch_t
 	// candidates for the patch in the image
 	int worst_score = INT_MAX;
 	int worst_index = 0;
-	int candidates_scores[16];
-	int candidates_x[16];
-	int candidates_y[16];
-	for (int i = 0; i < 16; i++) {
+	int candidates_scores[CANDIDATE_COUNT];
+	int candidates_x[CANDIDATE_COUNT];
+	int candidates_y[CANDIDATE_COUNT];
+	for (int i = 0; i < CANDIDATE_COUNT; i++) {
 		candidates_scores[i] = INT_MAX;
 		candidates_x[i] = 0;
 		candidates_y[i] = 0;
@@ -99,7 +104,7 @@ void quilt_patch_pick(quilt_image_t* source, quilt_image_t* image, quilt_patch_t
 		candidates_y[worst_index] = candidate_y;
 		
 		worst_score = 0;
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < CANDIDATE_COUNT; i++) {
 			if (candidates_scores[i] < worst_score) continue;
 			worst_score = candidates_scores[i];
 			worst_index = i;
@@ -114,7 +119,7 @@ void quilt_patch_pick(quilt_image_t* source, quilt_image_t* image, quilt_patch_t
 	static unsigned long hash = 5381;
 	hash = ((hash << 5) + hash) + worst_score;
 	
-	const int selected_candidate = hash % 16;
+	const int selected_candidate = hash % CANDIDATE_COUNT;
 	
 	const int select_x = candidates_x[selected_candidate];
 	const int select_y = candidates_y[selected_candidate];
